@@ -1,0 +1,39 @@
+format_version: '11'
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+
+workflows:
+  primary:
+    meta:
+      bitrise.io:
+        stack: osx-xcode-13.2.x  # Monterey stack!
+    steps:
+      - script@1:
+          title: Setup RDP via ngrok
+          inputs:
+            - content: |-
+                #!/bin/bash
+
+                echo "🔧 Installing and enabling remote desktop access..."
+
+                # Enable remote desktop and configure permissions
+                sudo systemsetup -setremotelogin on
+                sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist || true
+                sudo defaults write /Library/Preferences/com.apple.RemoteManagement.plist ARD_AllLocalUsers -bool true
+                sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
+                  -activate -configure -access -on -users $USER -privs -all -restart -agent
+
+                echo "✅ Remote Desktop should be enabled."
+
+                echo "🌐 Installing ngrok..."
+                brew install --no-quarantine ngrok || true
+
+                echo "🔐 Setting up ngrok with authtoken..."
+                ngrok config add-authtoken 2nyiyWrhpT6OwyUoaoZ2zdE9nNo_7KtHBQxaox3Wx2t9qBHTT
+
+                echo "🚪 Launching ngrok tunnel for RDP (port 5900)..."
+                nohup ngrok tcp 5900 > ngrok.log &
+
+                echo "🕒 Waiting 10s for ngrok to initialize..."
+                sleep 10
+                echo "📦 ngrok logs:"
+                cat ngrok.log
