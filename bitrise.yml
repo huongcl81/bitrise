@@ -5,35 +5,30 @@ workflows:
   primary:
     meta:
       bitrise.io:
-        stack: osx-xcode-13.2.x  # Monterey stack!
+        stack: osx-xcode-13.2.x  # ✅ Monterey stack!
     steps:
       - script@1:
-          title: Setup RDP via ngrok
+          title: Enable RDP via ngrok
           inputs:
             - content: |-
                 #!/bin/bash
-
-                echo "🔧 Installing and enabling remote desktop access..."
-
-                # Enable remote desktop and configure permissions
+                echo "✅ Enabling Remote Desktop (VNC)..."
                 sudo systemsetup -setremotelogin on
-                sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist || true
-                sudo defaults write /Library/Preferences/com.apple.RemoteManagement.plist ARD_AllLocalUsers -bool true
+                sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist
                 sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
                   -activate -configure -access -on -users $USER -privs -all -restart -agent
 
-                echo "✅ Remote Desktop should be enabled."
-
-                echo "🌐 Installing ngrok..."
+                echo "🌀 Installing ngrok..."
                 brew install --no-quarantine ngrok || true
 
-                echo "🔐 Setting up ngrok with authtoken..."
+                echo "🔑 Setting ngrok authtoken..."
                 ngrok config add-authtoken 2nyiyWrhpT6OwyUoaoZ2zdE9nNo_7KtHBQxaox3Wx2t9qBHTT
 
-                echo "🚪 Launching ngrok tunnel for RDP (port 5900)..."
+                echo "🚪 Starting ngrok TCP tunnel on port 5900 (VNC)..."
                 nohup ngrok tcp 5900 > ngrok.log &
 
-                echo "🕒 Waiting 10s for ngrok to initialize..."
-                sleep 10
-                echo "📦 ngrok logs:"
+                echo "⏳ Waiting 15 seconds for ngrok to boot..."
+                sleep 15
+
+                echo "📦 ngrok log:"
                 cat ngrok.log
